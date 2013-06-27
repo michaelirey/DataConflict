@@ -35,6 +35,7 @@ class UsersController < ApplicationController
   # GET /users/1/edit
   def edit
     @user = User.find(params[:id])
+    session[:before_record] = @user.get_accessible_attributes
   end
 
   # POST /users
@@ -59,10 +60,12 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
 
     respond_to do |format|
-      if @user.update_attributes(params[:user])
+      if @user.update_attributes_safe(params[:user], session[:before_record])
+        session[:before_record] = nil
         format.html { redirect_to @user, notice: 'User was successfully updated.' }
         format.json { head :no_content }
       else
+        session[:before_record] = @user.get_accessible_attributes
         format.html { render action: "edit" }
         format.json { render json: @user.errors, status: :unprocessable_entity }
       end
